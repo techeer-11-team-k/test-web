@@ -1,0 +1,262 @@
+# ============================================================
+# Python
+# ============================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Virtual environments
+.venv
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+__pypackages__/
+
+# Python package managers
+.pdm-python
+.pdm-build/
+.pixi
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Linters & formatters
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Cython
+cython_debug/
+
+# ============================================================
+# Node.js / Frontend
+# ============================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+build/
+dist/
+out/
+web-build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# Package manager lock files (팀 정책에 따라 선택)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Expo
+.expo/
+.expo-shared/
+
+# Next.js
+.next/
+.vercel
+
+# Vite
+.vite/
+
+# ============================================================
+# 환경변수 파일 (보안)
+# ============================================================
+
+.env
+.envrc
+.env.local
+.env.*.local
+.env.production
+.env.development
+!.env.example
+!.envexample
+
+# ============================================================
+# Docker
+# ============================================================
+
+docker-compose.override.yml
+.docker/
+
+# ============================================================
+# 데이터베이스
+# ============================================================
+
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+db.sqlite3
+db.sqlite3-journal
+
+# ============================================================
+# 로그 파일
+# ============================================================
+
+logs/
+*.log
+
+# ============================================================
+# 임시 파일
+# ============================================================
+
+*.tmp
+*.temp
+.temp/
+.cache/
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Cursor
+.cursorignore
+.cursorindexingignore
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# ============================================================
+# OS
+# ============================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ============================================================
+# 기타
+# ============================================================
+
+# Sphinx documentation
+docs/_build/
+/site
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Scrapy
+.scrapy
+
+# Flask
+instance/
+.webassets-cache
+
+# Django
+local_settings.py
+
+# Abstra
+.abstra/
+
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# PyPI
+.pypirc
