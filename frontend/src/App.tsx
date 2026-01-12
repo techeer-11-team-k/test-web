@@ -14,6 +14,8 @@ import { useProfile } from './hooks/useProfile';
 type ViewType = 'dashboard' | 'map' | 'favorites' | 'statistics' | 'myHome';
 
 export default function App() {
+  console.log('📱 App 컴포넌트 렌더링 시작');
+  
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [selectedApartment, setSelectedApartment] = useState<any>(null);
@@ -21,11 +23,25 @@ export default function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(false);
 
   // 로그인 후 자동으로 프로필 조회 (백엔드 account 테이블에 사용자 자동 생성)
   // useProfile 훅이 isSignedIn 상태를 감지하여 자동으로 /auth/me API를 호출합니다.
   // 백엔드의 get_current_user 함수가 실행되면서 사용자가 없으면 자동으로 생성됩니다.
   const { profile, loading: profileLoading, error: profileError } = useProfile();
+  
+  console.log('✅ useProfile 훅 실행 완료', { profileLoading, profileError });
+
+  // 웹/모바일 감지
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -70,12 +86,32 @@ export default function App() {
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50/30 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900">
-        <div className="max-w-md mx-auto min-h-screen bg-white dark:bg-zinc-950 shadow-2xl shadow-black/5 dark:shadow-black/50 relative pb-20">
+        <div 
+          className={`min-h-screen bg-white dark:bg-zinc-950 shadow-2xl shadow-black/5 dark:shadow-black/50 relative pb-20 ${
+            isDesktop ? '' : 'max-w-md mx-auto'
+          }`}
+          style={isDesktop ? {
+            width: '80%',
+            maxWidth: '80%',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          } : {}}
+        >
           {/* Header */}
           <header className={`fixed top-0 left-0 right-0 z-20 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xl transition-transform duration-300 ${
             isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
           }`}>
-            <div className="max-w-md mx-auto border-b dark:border-zinc-800 border-zinc-200">
+            <div 
+              className={`border-b dark:border-zinc-800 border-zinc-200 ${
+                isDesktop ? '' : 'max-w-md mx-auto'
+              }`}
+              style={isDesktop ? {
+                width: '80%',
+                maxWidth: '80%',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+              } : {}}
+            >
               <div className="px-4 py-4 flex items-center">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl shadow-lg shadow-sky-500/30">
@@ -90,7 +126,16 @@ export default function App() {
           </header>
 
           {/* Main Content */}
-          <main className="px-3 pt-20 py-6 min-h-[calc(100vh-5rem)]">
+          <main 
+            className="px-3 md:px-6 pt-20 py-6 min-h-[calc(100vh-5rem)]"
+            style={isDesktop ? {
+              width: '100%',
+              maxWidth: '100%',
+            } : {
+              width: '100%',
+              maxWidth: '100%',
+            }}
+          >
             <AnimatePresence mode="wait">
               {showApartmentDetail ? (
                 <motion.div
@@ -99,7 +144,7 @@ export default function App() {
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: '100%', opacity: 0 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 35, duration: 0.2 }}
-                  className="min-h-[calc(100vh-8rem)]"
+                  className="min-h-[calc(100vh-8rem)] w-full max-w-full"
                 >
                   <ApartmentDetail apartment={selectedApartment} onBack={handleBackFromDetail} isDarkMode={isDarkMode} />
                 </motion.div>
@@ -110,7 +155,7 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.2 }}
-                  className="min-h-[calc(100vh-8rem)]"
+                  className="min-h-[calc(100vh-8rem)] w-full max-w-full"
                 >
                   {currentView === 'dashboard' && <Dashboard onApartmentClick={handleApartmentSelect} isDarkMode={isDarkMode} />}
                   {currentView === 'map' && <MapView onApartmentSelect={handleApartmentSelect} isDarkMode={isDarkMode} />}
