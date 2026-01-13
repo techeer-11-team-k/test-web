@@ -137,30 +137,35 @@ async def global_exception_handler(request: Request, exc: Exception):
 # ============================================================
 # 데이터베이스 테이블 자동 생성 (개발 환경)
 # ============================================================
+# 주의: 현재 Redis 더미데이터를 사용 중이므로 DB 초기화는 비활성화
+# DB 수정 완료 후 다시 활성화하세요
 @app.on_event("startup")
 async def startup_event():
     """애플리케이션 시작 시 실행되는 이벤트"""
     import logging
     logger = logging.getLogger(__name__)
     
-    # 개발 환경에서만 테이블 자동 생성
-    if settings.ENVIRONMENT == "development" or settings.DEBUG:
-        try:
-            from sqlalchemy.ext.asyncio import create_async_engine
-            from app.db.base import Base
-            from app.models.account import Account  # 모든 모델 import
-            
-            logger.info("🔄 데이터베이스 테이블 확인 중...")
-            engine = create_async_engine(settings.DATABASE_URL, echo=False)
-            
-            async with engine.begin() as conn:
-                # 테이블이 없으면 생성
-                await conn.run_sync(Base.metadata.create_all)
-            
-            await engine.dispose()
-            logger.info("✅ 데이터베이스 테이블 확인 완료!")
-        except Exception as e:
-            logger.warning(f"⚠️ 데이터베이스 테이블 생성 실패 (이미 존재할 수 있음): {e}")
+    # 현재 Redis 더미데이터를 사용 중이므로 DB 초기화 건너뛰기
+    logger.info("ℹ️ Redis 더미데이터 모드: 데이터베이스 초기화 건너뜀")
+    
+    # 개발 환경에서만 테이블 자동 생성 (현재 비활성화)
+    # if settings.ENVIRONMENT == "development" or settings.DEBUG:
+    #     try:
+    #         from sqlalchemy.ext.asyncio import create_async_engine
+    #         from app.db.base import Base
+    #         from app.models.account import Account  # 모든 모델 import
+    #         
+    #         logger.info("🔄 데이터베이스 테이블 확인 중...")
+    #         engine = create_async_engine(settings.DATABASE_URL, echo=False)
+    #         
+    #         async with engine.begin() as conn:
+    #             # 테이블이 없으면 생성
+    #             await conn.run_sync(Base.metadata.create_all)
+    #         
+    #         await engine.dispose()
+    #         logger.info("✅ 데이터베이스 테이블 확인 완료!")
+    #     except Exception as e:
+    #         logger.warning(f"⚠️ 데이터베이스 테이블 생성 실패 (이미 존재할 수 있음): {e}")
 
 
 # ============================================================

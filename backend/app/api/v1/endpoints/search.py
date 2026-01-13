@@ -7,11 +7,7 @@
 """
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 import re
-
-from app.api.v1.deps import get_db, get_current_user
-from app.models.account import Account
 
 # Redis 서비스 (연결 실패시 Mock 데이터 사용)
 try:
@@ -43,8 +39,7 @@ async def search_apartments(
         ge=1, 
         le=50, 
         description="결과 개수 (기본 10개, 최대 50개)"
-    ),
-    db: AsyncSession = Depends(get_db)
+    )
 ):
     """
     ## 아파트명 검색 API
@@ -62,6 +57,7 @@ async def search_apartments(
     """
     # Redis 캐시에서 아파트 데이터 가져오기
     # 실제 DB 수정 중이므로 Redis 캐시를 사용하여 가짜 데이터 제공
+    # Redis가 없으면 JSON 파일에서 직접 로드
     apartments_data = []
     
     if USE_REDIS:
@@ -71,7 +67,41 @@ async def search_apartments(
                 # Redis 서비스의 검색 메서드 사용
                 apartments_data = redis_svc.search_apartments_by_name(q, limit)
         except Exception as e:
-            # Redis 연결 실패시 빈 리스트 반환
+            # Redis 연결 실패시 JSON 파일에서 직접 로드
+            apartments_data = []
+    
+    # Redis에 데이터가 없으면 JSON 파일에서 직접 로드
+    if not apartments_data:
+        try:
+            import json
+            from pathlib import Path
+            
+            # mock-data 폴더 경로 찾기
+            current_file = Path(__file__)
+            mock_data_path = current_file.parent.parent.parent.parent.parent.parent / "api-test" / "mock-data" / "apartments.json"
+            
+            if mock_data_path.exists():
+                with open(mock_data_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    # JSON 파일이 {"apartments": [...]} 형식인 경우
+                    if isinstance(data, dict) and "apartments" in data:
+                        all_apartments = data["apartments"]
+                    # 이미 리스트인 경우
+                    elif isinstance(data, list):
+                        all_apartments = data
+                    else:
+                        all_apartments = []
+                    
+                    # 검색어로 필터링
+                    query_lower = q.lower()
+                    filtered = [
+                        apt for apt in all_apartments
+                        if query_lower in apt.get("apt_name", "").lower()
+                    ]
+                    filtered.sort(key=lambda x: x.get("apt_name", ""))
+                    apartments_data = filtered[:limit]
+        except Exception as e:
+            # 파일 로드 실패시 빈 리스트
             apartments_data = []
     
     # 응답 데이터 구성 (실제 DB 구조와 동일한 형식)
@@ -127,8 +157,7 @@ async def search_locations(
         None, 
         regex="^(sigungu|dong)$",
         description="지역 유형 (sigungu: 시군구, dong: 동)"
-    ),
-    db: AsyncSession = Depends(get_db)
+    )
 ):
     """
     지역 검색 API
@@ -186,9 +215,7 @@ async def search_locations(
     }
 )
 async def get_recent_searches(
-    limit: int = Query(10, ge=1, le=50, description="최대 개수 (기본 10개, 최대 50개)"),
-    current_user: Account = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    limit: int = Query(10, ge=1, le=50, description="최대 개수 (기본 10개, 최대 50개)")
 ):
     """
     최근 검색어 조회 API
@@ -245,9 +272,7 @@ async def get_recent_searches(
     }
 )
 async def delete_recent_search(
-    search_id: int,
-    current_user: Account = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    search_id: int
 ):
     """
     최근 검색어 삭제 API

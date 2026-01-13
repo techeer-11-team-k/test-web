@@ -29,15 +29,26 @@ async def get_db() -> Generator:
     Yields:
         AsyncSession: 데이터베이스 세션
     """
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+    try:
+        async with AsyncSessionLocal() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+            finally:
+                await session.close()
+    except Exception as e:
+        # PostgreSQL 연결 실패 시 예외 처리
+        # Redis만 사용하는 엔드포인트에서는 이 오류가 발생하지 않아야 함
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"⚠️ 데이터베이스 연결 실패: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요."
+        )
 
 
 async def get_current_user(
