@@ -24,7 +24,7 @@ FastAPI 앱에 등록합니다.
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, admin
+from app.api.v1.endpoints import auth, admin, test_api, search
 
 # 메인 API 라우터 생성
 # 이 라우터에 모든 하위 라우터를 등록합니다
@@ -94,3 +94,42 @@ api_router.include_router(
 # 3. 결과: GET /api/v1/apartments/search 엔드포인트 생성됨
 #
 # 자세한 내용은 backend/docs/api_development.md 참고
+
+# ============================================================
+# 검색 API (아파트 & 지역)
+# ============================================================
+# 아파트명 검색, 지역 검색, 최근 검색어 관리
+# Redis 더미데이터를 사용하여 검색합니다.
+#
+# 엔드포인트:
+# - GET    /api/v1/search/apartments      - 아파트명 검색 (자동완성) - 박찬영
+# - GET    /api/v1/search/locations       - 지역 검색
+# - GET    /api/v1/search/recent          - 최근 검색어 조회
+# - DELETE /api/v1/search/recent/{id}     - 최근 검색어 삭제
+#
+# 파일 위치: app/api/v1/endpoints/search.py
+api_router.include_router(
+    search.router,
+    prefix="/search",  # URL prefix: /api/v1/search/...
+    tags=["🔍 Search (검색)"]  # Swagger UI에서 그룹화할 태그
+)
+
+# ============================================================
+# 🧪 테스트 API (Redis + 가짜 데이터)
+# ============================================================
+# 실제 DB 대신 Redis를 사용하여 API 동작을 테스트합니다.
+# 사용자 → API → Redis(가짜 데이터) 흐름 테스트용
+#
+# 엔드포인트:
+# - GET  /api/v1/test/health      - 헬스 체크
+# - GET  /api/v1/test/todos       - 할 일 목록
+# - POST /api/v1/test/todos       - 할 일 생성
+# - GET  /api/v1/test/apartments  - 아파트 목록 (검색)
+# - GET  /api/v1/test/users       - 사용자 목록
+#
+# 파일 위치: app/api/v1/endpoints/test_api.py
+api_router.include_router(
+    test_api.router,
+    prefix="/test",  # URL prefix: /api/v1/test/...
+    tags=["🧪 Test (API 테스트)"]  # Swagger UI에서 그룹화할 태그
+)

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아파트 검색 API 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .search-button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-button:active {
+            transform: translateY(0);
+        }
+
+        .search-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .limit-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .limit-label {
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .limit-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .limit-button {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .limit-button:hover {
+            border-color: #667eea;
+        }
+
+        .limit-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .results-box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .results-count {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .result-item {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .apt-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .apt-address {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 10px;
+        }
+
+        .apt-location {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .apt-coords {
+            color: #667eea;
+            font-family: monospace;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .api-info {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .api-info code {
+            background: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 아파트 검색 API 테스트</h1>
+            <p>부동산 데이터 분석 서비스 - FEAT-004: 아파트 검색 POC</p>
+            <p style="font-size: 0.9em; margin-top: 5px; opacity: 0.8;">
+                자동완성 응답 목표: &lt; 100ms | 검색어: 2글자 이상
+            </p>
+        </div>
+
+        <div class="search-box">
+            <div class="search-input-group">
+                <input
+                    type="text"
+                    id="searchInput"
+                    class="search-input"
+                    placeholder="아파트명을 입력하세요 (예: 래미안, 힐스테이트...)"
+                    autocomplete="off"
+                />
+                <button id="searchButton" class="search-button" onclick="searchApartments()">
+                    검색
+                </button>
+            </div>
+            <div class="limit-group">
+                <span class="limit-label">결과 개수:</span>
+                <div class="limit-buttons">
+                    <button class="limit-button active" data-limit="10" onclick="setLimit(10)">10</button>
+                    <button class="limit-button" data-limit="20" onclick="setLimit(20)">20</button>
+                    <button class="limit-button" data-limit="30" onclick="setLimit(30)">30</button>
+                    <button class="limit-button" data-limit="50" onclick="setLimit(50)">50</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-box" id="resultsBox" style="display: none;">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">검색 결과: 0개</div>
+            </div>
+            <div id="resultsList"></div>
+        </div>
+
+        <div class="api-info">
+            <strong>📋 API 정보 (PRD 기준):</strong><br>
+            <strong>FEAT-004:</strong> 아파트 검색 (자동완성)<br>
+            엔드포인트: <code>GET /api/v1/search/apartments</code><br>
+            파라미터: <code>q</code> (검색어, 최소 2글자), <code>limit</code> (결과 개수, 기본 10개, 최대 50개)<br>
+            성능 목표: 자동완성 응답 &lt; 100ms<br>
+            인수 조건: ✅ 2글자 이상 입력 시 연관 검색어 표시 ✅ 자동완성 응답 &lt; 100ms
+        </div>
+    </div>
+
+    <script>
+        // API 설정 - PRD 기준: GET /api/v1/search/apartments
+        const API_BASE_URL = 'http://localhost:8000/api/v1/search';
+        let currentLimit = 10;
+        let searchTimeout = null;
+        let lastSearchTime = null;
+
+        // 검색어 입력 시 자동 검색 (디바운싱)
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            
+            // 기존 타이머 취소
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // PRD 기준: 2글자 이상 입력 시 자동완성 (응답 < 100ms 목표)
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    searchApartments();
+                }, 300); // 300ms 디바운싱 (PRD: 자동완성 < 100ms 목표)
+            } else if (query.length === 0) {
+                // 검색어가 비어있으면 결과 숨기기
+                document.getElementById('resultsBox').style.display = 'none';
+            }
+        });
+
+        // Enter 키로 검색
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchApartments();
+            }
+        });
+
+        // 결과 개수 제한 설정
+        function setLimit(limit) {
+            currentLimit = limit;
+            
+            // 버튼 활성화 상태 업데이트
+            document.querySelectorAll('.limit-button').forEach(btn => {
+                if (parseInt(btn.dataset.limit) === limit) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // 검색어가 있으면 다시 검색
+            const query = document.getElementById('searchInput').value.trim();
+            if (query.length >= 2) {
+                searchApartments();
+            }
+        }
+
+        // 아파트 검색 함수
+        async function searchApartments() {
+            const query = document.getElementById('searchInput').value.trim();
+            const searchButton = document.getElementById('searchButton');
+            const resultsBox = document.getElementById('resultsBox');
+            const resultsList = document.getElementById('resultsList');
+            const resultsCount = document.getElementById('resultsCount');
+
+            // 검색어 유효성 검사
+            if (query.length < 2) {
+                alert('검색어는 최소 2글자 이상 입력해주세요.');
+                return;
+            }
+
+            // UI 업데이트
+            searchButton.disabled = true;
+            searchButton.textContent = '검색 중...';
+            resultsBox.style.display = 'block';
+            resultsList.innerHTML = '<div class="loading">⏳ 검색 중...</div>';
+
+            try {
+                // PRD 기준: GET /api/v1/search/apartments?q=래미안&limit=10
+                const url = `${API_BASE_URL}/apartments?q=${encodeURIComponent(query)}&limit=${currentLimit}`;
+                console.log('API 호출:', url);
+                
+                const startTime = performance.now();
+                lastSearchTime = startTime;
+
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const endTime = performance.now();
+                const responseTime = (endTime - startTime).toFixed(0);
+                
+                console.log('API 응답:', data);
+                console.log(`응답 시간: ${responseTime}ms (목표: < 100ms)`);
+
+                // PRD 응답 형식: { success: true, data: { results: [...] }, meta: { query, count } }
+                if (data.success && data.data && data.data.results) {
+                    displayResults(data.data.results, data.meta, responseTime);
+                } else {
+                    throw new Error('응답 형식이 올바르지 않습니다.');
+                }
+            } catch (error) {
+                console.error('검색 오류:', error);
+                resultsList.innerHTML = `
+                    <div class="error">
+                        <strong>❌ 오류 발생</strong><br>
+                        ${error.message}<br><br>
+                        <small>서버가 실행 중인지 확인하세요: ${API_BASE_URL}</small>
+                    </div>
+                `;
+                resultsCount.textContent = '검색 실패';
+            } finally {
+                searchButton.disabled = false;
+                searchButton.textContent = '검색';
+            }
+        }
+
+        // 검색 결과 표시
+        function displayResults(results, meta, responseTime) {
+            const resultsList = document.getElementById('resultsList');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            // 응답 시간 표시 (PRD: < 100ms 목표)
+            const timeStatus = responseTime < 100 ? '✅' : '⚠️';
+            const timeColor = responseTime < 100 ? '#48bb78' : '#ed8936';
+
+            if (results.length === 0) {
+                resultsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <div>검색 결과가 없습니다.</div>
+                    </div>
+                `;
+                resultsCount.textContent = '검색 결과: 0개';
+                return;
+            }
+
+            resultsCount.innerHTML = `
+                검색 결과: ${results.length}개 (검색어: "${meta.query}")
+                <span style="color: ${timeColor}; font-size: 0.85em; margin-left: 10px;">
+                    ${timeStatus} ${responseTime}ms
+                </span>
+            `;
+
+            resultsList.innerHTML = results.map(apt => `
+                <div class="result-item" onclick="selectApartment('${apt.apt_id}')">
+                    <div class="apt-name">${escapeHtml(apt.apt_name)}</div>
+                    <div class="apt-address">${escapeHtml(apt.address)}</div>
+                    <div class="apt-location">
+                        <span>${escapeHtml(apt.sigungu_name || '')} ${escapeHtml(apt.dong_name || '')}</span>
+                        ${apt.location ? `
+                            <span class="apt-coords">📍 ${apt.location.lat.toFixed(6)}, ${apt.location.lng.toFixed(6)}</span>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // XSS 방지용 HTML 이스케이프
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 아파트 선택 (PRD: 상세 정보 조회로 연결)
+        function selectApartment(aptId) {
+            console.log('선택된 아파트 ID:', aptId);
+            alert(`아파트 ID: ${aptId}\n\nPRD 기준: GET /api/v1/apartments/${aptId} 호출 예정`);
+            // TODO: 상세 정보 페이지로 이동 또는 모달 표시
+        }
+    </script>
+</body>
+</html>

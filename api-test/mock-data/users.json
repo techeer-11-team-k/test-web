@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "id": "user-001",
+      "email": "test@example.com",
+      "name": "테스트 사용자",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=user001",
+      "created_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "id": "user-002",
+      "email": "admin@example.com",
+      "name": "관리자",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  ]
+}

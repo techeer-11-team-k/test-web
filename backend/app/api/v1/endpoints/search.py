@@ -1,21 +1,24 @@
 """
-검색 관련 API 엔드포인트
+아파트명 검색 API 엔드포인트
 
+담당자: 박찬영
 담당 기능:
 - 아파트명 검색 (GET /search/apartments) - P0
-- 지역 검색 (GET /search/locations) - P0
-- 최근 검색어 조회 (GET /search/recent) - P1
-- 최근 검색어 삭제 (DELETE /search/recent/{id}) - P1
 """
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+import re
 
 from app.api.v1.deps import get_db, get_current_user
 from app.models.account import Account
 
-# TODO: 서비스 레이어 구현 후 import
-# from app.services.search_service import SearchService
+# Redis 서비스 (연결 실패시 Mock 데이터 사용)
+try:
+    from app.services.redis_service import get_redis_service
+    USE_REDIS = True
+except ImportError:
+    USE_REDIS = False
 
 router = APIRouter()
 
@@ -25,65 +28,83 @@ router = APIRouter()
     response_model=dict,
     status_code=status.HTTP_200_OK,
     tags=["🔍 Search (검색)"],
-    summary="아파트명 검색",
-    description="아파트명으로 검색합니다. 검색창에 글자를 입력할 때마다(2글자 이상) 자동완성 결과를 반환합니다.",
-    responses={
-        200: {"description": "검색 성공"},
-        400: {"description": "검색어가 2글자 미만인 경우"},
-        422: {"description": "입력값 검증 실패"}
-    }
+    summary="아파트명 검색 (자동완성)",
+    description="아파트명으로 검색합니다. 검색창에 2글자 이상 입력 시 자동완성 결과를 반환합니다."
 )
 async def search_apartments(
-    q: str = Query(..., min_length=2, description="검색어 (2글자 이상)"),
-    limit: int = Query(10, ge=1, le=50, description="결과 개수 (최대 50개)"),
+    q: str = Query(
+        ..., 
+        min_length=2, 
+        description="검색어 (2글자 이상)",
+        example="래미안"
+    ),
+    limit: int = Query(
+        10, 
+        ge=1, 
+        le=50, 
+        description="결과 개수 (기본 10개, 최대 50개)"
+    ),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    아파트명 검색 API - 자동완성
+    ## 아파트명 검색 API
     
-    검색창에 입력한 글자로 시작하거나 포함하는 아파트 목록을 반환합니다.
-    성능 최적화를 위해 Redis 캐싱을 적용합니다.
+    검색창에 입력한 글자를 포함하는 아파트 목록을 반환합니다.
+    Redis 더미데이터를 사용하여 검색합니다.
     
-    Args:
-        q: 검색어 (최소 2글자)
-        limit: 반환할 결과 개수 (기본 10개, 최대 50개)
-        db: 데이터베이스 세션
+    ### Query Parameters
+    - **q**: 검색어 (최소 2글자)
+    - **limit**: 반환할 결과 개수 (기본 10개, 최대 50개)
     
-    Returns:
-        {
-            "success": true,
-            "data": {
-                "results": [
-                    {
-                        "apt_id": int,
-                        "apt_name": str,
-                        "address": str,
-                        "sigungu_name": str,
-                        "location": {"lat": float, "lng": float}
-                    }
-                ]
-            },
-            "meta": {
-                "query": str,
-                "count": int
-            }
-        }
-    
-    Raises:
-        HTTPException: 검색어가 2글자 미만인 경우 400 에러
+    ### Response
+    - 성공: 아파트 목록 (이름, 주소, 위치 정보)
+    - 실패: 422 (검색어가 2글자 미만)
     """
-    # TODO: SearchService.search_apartments() 구현 후 사용
-    # result = await SearchService.search_apartments(db, query=q, limit=limit)
+    # Redis 캐시에서 아파트 데이터 가져오기
+    # 실제 DB 수정 중이므로 Redis 캐시를 사용하여 가짜 데이터 제공
+    apartments_data = []
     
-    # 임시 응답 (서비스 레이어 구현 전)
+    if USE_REDIS:
+        try:
+            redis_svc = get_redis_service()
+            if redis_svc.connect():
+                # Redis 서비스의 검색 메서드 사용
+                apartments_data = redis_svc.search_apartments_by_name(q, limit)
+        except Exception as e:
+            # Redis 연결 실패시 빈 리스트 반환
+            apartments_data = []
+    
+    # 응답 데이터 구성 (실제 DB 구조와 동일한 형식)
+    # search_apart.py의 응답 형식에 맞춤
+    results = []
+    for apt in apartments_data:
+        result_item = {
+            "apt_id": apt.get("apt_id"),
+            "apt_name": apt.get("apt_name", ""),
+            "address": apt.get("address", ""),
+            "sigungu_name": apt.get("sigungu_name"),
+            "dong_name": apt.get("dong_name"),
+        }
+        
+        # 위치 정보 추가 (latitude, longitude가 있으면)
+        if apt.get("latitude") and apt.get("longitude"):
+            result_item["location"] = {
+                "lat": apt.get("latitude"),
+                "lng": apt.get("longitude")
+            }
+        else:
+            result_item["location"] = None
+        
+        results.append(result_item)
+    
     return {
         "success": True,
         "data": {
-            "results": []
+            "results": results
         },
         "meta": {
             "query": q,
-            "count": 0
+            "count": len(results)
         }
     }
 
